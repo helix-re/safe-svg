@@ -1,7 +1,6 @@
 plugins {
     `java-library`
     `maven-publish`
-    signing
     jacoco
     id("pl.allegro.tech.build.axion-release") version "1.10.0"
     id("com.gradle.build-scan") version "2.1"
@@ -10,8 +9,13 @@ plugins {
 }
 
 repositories {
-    jcenter()
-    mavenCentral()
+    maven {
+        credentials {
+            username = project.properties.get("helixRepoUser") as String?
+            password = project.properties.get("helixRepoPassword") as String?
+        }
+        url = uri("https://repo.helix.re/repository/maven-central/")
+    }
 }
 
 dependencies {
@@ -64,7 +68,7 @@ tasks.jacocoTestReport {
 publishing {
     publications {
         create<MavenPublication>("sonatype") {
-            artifactId = "safe-svg"
+            artifactId = "safe-svg-java8"
             from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
@@ -77,7 +81,7 @@ publishing {
                 }
             }
             pom {
-                name.set("safe-svg")
+                name.set("safe-svg-java8 ")
                 description.set("Simple and lightweight library that helps to validate SVG files in security manners.")
                 url.set("https://github.com/bgalek/safe-svg/")
                 licenses {
@@ -104,19 +108,14 @@ publishing {
     repositories {
         maven {
             credentials {
-                username = project.properties.get("ossrhUsername") as String?
-                password = project.properties.get("ossrhPassword") as String?
+                username = project.properties.get("helixRepoUser") as String?
+                password = project.properties.get("helixRepoPassword") as String?
             }
-            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+            val releasesRepoUrl = uri("https://repo.helix.re/repository/helix/")
+            val snapshotsRepoUrl = uri("https://repo.helix.re/repository/helix-snapshots/")
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
         }
     }
-}
-
-signing {
-    useGpgCmd()
-    sign(publishing.publications["sonatype"])
 }
 
 tasks.javadoc {
